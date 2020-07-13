@@ -1,0 +1,59 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: html
+  labels:
+    app: testhtml
+spec:
+  ports:
+    - port: 80
+  selector:
+    app: testhtml
+    tier: frontend
+  type: NodePort
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: html-pv-claim
+  labels:
+    app: testhtml
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1 # for versions before 1.9.0 use apps/v1beta2
+kind: Deployment
+metadata:
+  name: html
+  labels:
+    app: testhtml
+spec:
+  selector:
+    matchLabels:
+      app: testhtml
+      tier: frontend
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: testhtml
+        tier: frontend
+    spec:
+      containers:
+      - image: httpd
+        name: Testhtml
+        ports:
+        - containerPort: 80
+          name: html
+        volumeMounts:
+        - name: html-persistent-storage
+          mountPath: /usr/local/apache2/htdocs/
+      volumes:
+      - name: html-persistent-storage
+        persistentVolumeClaim:
+          claimName: html-pv-claim
